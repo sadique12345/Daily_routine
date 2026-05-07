@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daily Routine Checklist</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f3ee;
+      --surface: #ffffff;
+      --surface-2: #fdfaf5;
+      --ink: #25211c;
+      --muted: #706a62;
+      --line: #ded7cc;
+      --accent: #176b87;
+      --accent-dark: #104d62;
+      --green: #2e8b57;
+      --amber: #c88719;
+      --red: #c84c3a;
+      --shadow: 0 18px 48px rgba(36, 30, 20, 0.12);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    [hidden], .hidden { display: none !important; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        linear-gradient(135deg, rgba(23, 107, 135, 0.08), transparent 34%),
+        linear-gradient(45deg, rgba(46, 139, 87, 0.08), transparent 42%),
+        var(--bg);
+      color: var(--ink);
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      border: 0;
+      border-radius: 8px;
+      padding: 0 16px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:hover { background: var(--accent-dark); }
+    button.secondary, button.subtle { background: #efe9df; color: var(--ink); }
+    button.secondary:hover, button.subtle:hover { background: #e6ddd0; }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 11px 12px;
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(23, 107, 135, 0.14);
+    }
+
+    textarea { min-height: 220px; resize: vertical; line-height: 1.5; }
+
+    .lock-screen {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .pin-panel {
+      width: min(420px, 100%);
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(222, 215, 204, 0.9);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 34px;
+    }
+
+    .brand-mark {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 900;
+      margin-bottom: 18px;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2, h3 { letter-spacing: 0; }
+    p, .hint, small { color: var(--muted); }
+    .error { min-height: 20px; color: var(--red); font-size: 0.9rem; font-weight: 800; }
+
+    .app-shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 26px 0 42px;
+    }
+
+    .topbar, .panel-header, .calendar-nav, .inline-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .topbar { margin-bottom: 18px; }
+    .eyebrow {
+      margin-bottom: 4px;
+      color: var(--accent-dark);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .topbar-actions, .date-strip, .modal-actions, .task-actions, .calendar-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-button { min-width: 42px; }
+    .icon-only { width: 42px; min-width: 42px; padding: 0; }
+
+    .date-strip {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.85);
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .date-strip input { max-width: 180px; }
+
+    .summary-band {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .summary-item, .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 10px 28px rgba(36,30,20,0.06);
+    }
+
+    .summary-item { padding: 16px; }
+    .summary-item span { display: block; font-size: clamp(1.5rem, 3vw, 2.1rem); font-weight: 900; }
+    .summary-item small { font-weight: 800; }
+
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
+      gap: 16px;
+    }
+
+    .panel { padding: 18px; }
+    .panel-header { margin-bottom: 16px; }
+
+    .task-list { display: grid; gap: 10px; }
+
+    .task-card {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 13px;
+    }
+
+    .task-card.done { border-color: rgba(46,139,87,0.35); background: #f2fbf5; }
+    .task-checkbox { width: 24px; height: 24px; margin-top: 2px; accent-color: var(--green); }
+    .task-main { min-width: 0; }
+    .task-title-row { display: flex; justify-content: space-between; gap: 10px; }
+    .task-title { overflow-wrap: anywhere; font-weight: 900; }
+    .task-meta { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 9px; margin-top: 12px; }
+    .task-actions button { min-height: 34px; width: auto; padding: 0 10px; }
+
+    .empty-state {
+      display: grid;
+      place-items: center;
+      min-height: 150px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      text-align: center;
+      padding: 16px;
+    }
+
+    dialog {
+      width: min(620px, calc(100% - 28px));
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 0;
+    }
+
+    dialog::backdrop { background: rgba(30,27,23,0.42); }
+    dialog > form, dialog > section { display: grid; gap: 16px; padding: 22px; }
+    .modal-header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .calendar-modal { width: min(980px, calc(100% - 28px)); }
+    .dropdown-modal { width: min(840px, calc(100% - 28px)); }
+
+    .segmented {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .segmented button {
+      min-height: 38px;
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink);
+      border-right: 1px solid var(--line);
+    }
+
+    .segmented button:last-child { border-right: 0; }
+    .segmented button.active { background: var(--accent); color: #fff; }
+
+    .calendar-grid { display: grid; gap: 8px; }
+    .calendar-grid.month { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+    .calendar-grid.week, .calendar-grid.year { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+    .calendar-grid.day { grid-template-columns: 1fr; }
+
+    .calendar-cell {
+      min-height: 96px;
+      display: grid;
+      align-content: space-between;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      cursor: pointer;
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .calendar-cell.muted { opacity: 0.45; }
+    .calendar-cell.complete { background: #e9f7ee; border-color: rgba(46,139,87,0.38); }
+    .calendar-cell.partial { background: #fff6df; border-color: rgba(200,135,25,0.36); }
+    .calendar-cell.missed { background: #fdecea; border-color: rgba(200,76,58,0.36); }
+    .bar { height: 7px; border-radius: 99px; background: rgba(37,33,28,0.12); overflow: hidden; }
+    .bar span { display: block; height: 100%; background: var(--green); }
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 0.9rem; font-weight: 800; }
+    .swatch { display: inline-block; width: 13px; height: 13px; border-radius: 4px; margin-right: 6px; }
+    .swatch.complete { background: var(--green); }
+    .swatch.partial { background: var(--amber); }
+    .swatch.missed { background: var(--red); }
+
+    .task-dropdown-picker {
+      display: grid;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-2);
+      padding: 14px;
+    }
+
+    .dropdown-choice-list, .dropdown-list { display: grid; gap: 10px; }
+
+    .dropdown-choice {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) minmax(150px, 220px);
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+    }
+
+    .dropdown-choice input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); }
+    .dropdown-choice small, .dropdown-row small { display: block; font-weight: 700; overflow-wrap: anywhere; }
+
+    .dropdown-manager {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(260px, 1fr);
+      gap: 16px;
+    }
+
+    .dropdown-row {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+
+    .dropdown-row-actions { display: flex; gap: 8px; }
+    .dropdown-form { align-self: start; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); padding: 14px; }
+
+    @media (max-width: 860px) {
+      .topbar, .panel-header, .inline-header { flex-direction: column; }
+      .workspace-grid { grid-template-columns: 1fr; }
+      .task-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .dropdown-manager, .dropdown-choice { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .app-shell { width: min(100% - 20px, 1180px); padding-top: 14px; }
+      .topbar-actions button span { display: none; }
+      .summary-band, .task-meta, .form-grid, .calendar-grid.month { grid-template-columns: 1fr; }
+      .calendar-cell { min-height: 78px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="authScreen" class="lock-screen">
+    <section class="pin-panel" aria-labelledby="pinTitle">
+      <div class="brand-mark" aria-hidden="true">DR</div>
+      <h1 id="pinTitle">Daily Routine</h1>
+      <p>Sign in to sync your routine across all your devices.</p>
+      <form id="authForm">
+        <label for="emailInput">Email</label>
+        <input id="emailInput" type="email" autocomplete="email" placeholder="you@example.com" required>
+        <label for="passwordInput">Password</label>
+        <input id="passwordInput" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required>
+        <div class="modal-actions">
+          <button id="signInButton" type="submit">Sign in</button>
+          <button id="signUpButton" type="button" class="secondary">Create account</button>
+        </div>
+        <span id="authMessage" class="error" role="alert"></span>
+      </form>
+    </section>
+  </div>
+
+  <main id="appShell" class="app-shell" hidden>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Daily Routine</p>
+        <h1 id="todayHeading">Checklist</h1>
+      </div>
+      <div class="topbar-actions">
+        <button id="calendarButton" type="button"><span>Calendar</span></button>
+        <button id="exportButton" type="button"><span>Export</span></button>
+        <button id="settingsButton" class="subtle icon-button" type="button" title="Settings" aria-label="Settings">Settings</button>
+        <button id="signOutButton" class="subtle icon-button" type="button" title="Sign out" aria-label="Sign out">Sign out</button>
+      </div>
+    </header>
+    <p id="syncStatus" class="hint">Connecting to cloud sync...</p>
+
+    <section class="date-strip" aria-label="Select date">
+      <button id="previousDay" class="icon-only" type="button" title="Previous day" aria-label="Previous day">&lt;</button>
+      <input id="activeDate" type="date" aria-label="Active date">
+      <button id="todayButton" type="button">Today</button>
+      <button id="nextDay" class="icon-only" type="button" title="Next day" aria-label="Next day">&gt;</button>
+    </section>
+
+    <section class="summary-band" aria-label="Daily summary">
+      <div class="summary-item"><span id="completedCount">0</span><small>Completed</small></div>
+      <div class="summary-item"><span id="totalCount">0</span><small>Total goals</small></div>
+      <div class="summary-item"><span id="completionPercent">0%</span><small>Progress</small></div>
+    </section>
+
+    <section class="workspace-grid">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Today's Tasks</h2>
+            <p>Check off goals and record useful details.</p>
+          </div>
+          <button id="addTaskButton" type="button">Add task</button>
+        </div>
+        <div id="taskList" class="task-list"></div>
+        <div id="emptyTasks" class="empty-state"><p>Add your first daily task to begin tracking your routine.</p></div>
+      </section>
+
+      <aside class="panel">
+        <div class="panel-header"><h2>Daily Notes</h2></div>
+        <textarea id="dailyNotes" rows="12" placeholder="Notes for this day..."></textarea>
+        <p class="hint">Notes are saved automatically for the selected date.</p>
+      </aside>
+    </section>
+  </main>
+
+  <dialog id="taskDialog">
+    <form id="taskForm" method="dialog">
+      <div class="modal-header">
+        <h2 id="taskDialogTitle">Add task</h2>
+        <button class="subtle icon-only" type="button" data-close-dialog="taskDialog">X</button>
+      </div>
+      <input type="hidden" id="taskId">
+      <label>Task name <input id="taskName" type="text" maxlength="80" placeholder="Morning walk" required></label>
+      <section class="task-dropdown-picker">
+        <div class="inline-header">
+          <div>
+            <h3>Dropdowns for this task</h3>
+            <p>Select only the fields that make sense for this task. Defaults are optional.</p>
+          </div>
+          <button id="manageDropdownsFromTask" type="button" class="secondary">Manage</button>
+        </div>
+        <div id="taskDropdownChoices" class="dropdown-choice-list"></div>
+      </section>
+      <div class="modal-actions">
+        <button type="button" class="secondary" data-close-dialog="taskDialog">Cancel</button>
+        <button type="submit">Save task</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="calendarDialog" class="calendar-modal">
+    <section>
+      <div class="modal-header">
+        <div><h2>Calendar</h2><p id="calendarRange">Progress overview</p></div>
+        <button class="subtle icon-only" type="button" data-close-dialog="calendarDialog">X</button>
+      </div>
+      <div class="calendar-toolbar">
+        <div class="segmented" aria-label="Calendar view">
+          <button type="button" data-calendar-view="day" class="active">Day</button>
+          <button type="button" data-calendar-view="week">Week</button>
+          <button type="button" data-calendar-view="month">Month</button>
+          <button type="button" data-calendar-view="year">Year</button>
+        </div>
+        <div class="segmented" aria-label="Calendar colour mode">
+          <button type="button" data-color-mode="status" class="active">All / not all</button>
+          <button type="button" data-color-mode="gradient">Goal gradient</button>
+        </div>
+      </div>
+      <div class="calendar-nav">
+        <button id="calendarPrevious" class="icon-only" type="button">&lt;</button>
+        <strong id="calendarTitle">Today</strong>
+        <button id="calendarNext" class="icon-only" type="button">&gt;</button>
+      </div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+      <div class="legend">
+        <span><i class="swatch complete"></i>All goals achieved</span>
+        <span><i class="swatch partial"></i>Some goals achieved</span>
+        <span><i class="swatch missed"></i>Not achieved</span>
+      </div>
+    </section>
+  </dialog>
+
+  <dialog id="settingsDialog">
+    <section>
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button class="subtle icon-only" type="button" data-close-dialog="settingsDialog">X</button>
+      </div>
+      <p class="hint">Signed in as <strong id="userEmail">...</strong></p>
+      <button id="manageDropdownsButton" type="button" class="secondary">Manage task dropdowns</button>
+      <div class="modal-actions">
+        <button type="button" class="secondary" data-close-dialog="settingsDialog">Close</button>
+        <button id="settingsSignOutButton" type="button">Sign out</button>
+      </div>
+    </section>
+  </dialog>
+
+  <dialog id="dropdownDialog" class="dropdown-modal">
+    <section>
+      <div class="modal-header">
+        <div><h2>Task Dropdowns</h2><p>Create dropdowns you can reuse across tasks.</p></div>
+        <button class="subtle icon-only" type="button" data-close-dialog="dropdownDialog">X</button>
+      </div>
+      <div class="dropdown-manager">
+        <div id="dropdownList" class="dropdown-list"></div>
+        <form id="dropdownForm" class="dropdown-form" method="dialog">
+          <input type="hidden" id="dropdownId">
+          <label>Dropdown name <input id="dropdownLabel" type="text" maxlength="40" placeholder="Location" required></label>
+          <label>Options <textarea id="dropdownOptions" rows="7" placeholder="Home&#10;Office&#10;Outside" required></textarea></label>
+          <p class="hint">Write one option per line. Empty lines are ignored.</p>
+          <div class="modal-actions">
+            <button id="newDropdownButton" type="button" class="secondary">New</button>
+            <button type="submit">Save dropdown</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </dialog>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      onSnapshot,
+      setDoc,
+      serverTimestamp,
+      enableIndexedDbPersistence
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "PASTE_YOUR_API_KEY_HERE",
+      authDomain: "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "PASTE_YOUR_PROJECT_ID",
+      storageBucket: "PASTE_YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "PASTE_YOUR_SENDER_ID",
+      appId: "PASTE_YOUR_APP_ID"
+    };
+
+    const STORAGE_KEY = "dailyRoutineChecklist.firebaseBackup.v1";
+    const OLD_STORAGE_KEY = "dailyRoutineChecklist.v1";
+    const DEFAULT_DROPDOWNS = [
+      { id: "time", label: "Time", options: ["06:00", "06:30", "07:00", "07:30", "08:00", "09:00", "12:00", "18:00", "21:00"] },
+      { id: "duration", label: "Duration", options: ["5 min", "10 min", "15 min", "30 min", "45 min", "60 min", "90 min"] },
+      { id: "type", label: "Type", options: ["Health", "Work", "Study", "Home", "Mindfulness", "Custom"] },
+      { id: "priority", label: "Priority", options: ["Low", "Medium", "High"] },
+      { id: "mood", label: "Mood", options: ["Great", "Good", "Okay", "Hard", "Skipped"] }
+    ];
+    const DEFAULT_TASKS = [
+      { id: id(), name: "Wake up on time", dropdowns: [{ definitionId: "time", defaultValue: "06:30" }, { definitionId: "priority", defaultValue: "High" }] },
+      { id: id(), name: "Exercise or walk", dropdowns: [{ definitionId: "time", defaultValue: "07:00" }, { definitionId: "duration", defaultValue: "30 min" }, { definitionId: "type", defaultValue: "Health" }] },
+      { id: id(), name: "Plan the day", dropdowns: [{ definitionId: "duration", defaultValue: "10 min" }, { definitionId: "type", defaultValue: "Work" }] }
+    ];
+    let app = null;
+    let auth = null;
+    let db = null;
+    let unsubscribeRoutine = null;
+    let saveTimer = null;
+    let currentUser = null;
+    let applyingRemoteData = false;
+    const state = { selectedDate: dateKey(new Date()), calendarDate: new Date(), calendarView: "day", colorMode: "status", data: defaultData() };
+    const el = {};
+
+    document.addEventListener("DOMContentLoaded", init);
+
+    function init() {
+      [
+        "authScreen","appShell","authForm","emailInput","passwordInput","signInButton","signUpButton","authMessage","syncStatus","userEmail",
+        "todayHeading","calendarButton","exportButton","settingsButton","signOutButton","settingsSignOutButton",
+        "previousDay","nextDay","todayButton","activeDate","completedCount","totalCount","completionPercent","addTaskButton","taskList","emptyTasks",
+        "dailyNotes","taskDialog","taskForm","taskDialogTitle","taskId","taskName","taskDropdownChoices","manageDropdownsFromTask","calendarDialog",
+        "calendarRange","calendarGrid","calendarTitle","calendarPrevious","calendarNext","settingsDialog",
+        "manageDropdownsButton","dropdownDialog","dropdownList","dropdownForm","dropdownId","dropdownLabel","dropdownOptions","newDropdownButton"
+      ].forEach((key) => el[key] = document.getElementById(key));
+
+      el.authForm.addEventListener("submit", signIn);
+      el.signUpButton.addEventListener("click", signUp);
+      el.signOutButton.addEventListener("click", signOutUser);
+      el.settingsSignOutButton.addEventListener("click", signOutUser);
+      el.activeDate.addEventListener("change", () => setSelectedDate(el.activeDate.value));
+      el.previousDay.addEventListener("click", () => moveSelectedDate(-1));
+      el.nextDay.addEventListener("click", () => moveSelectedDate(1));
+      el.todayButton.addEventListener("click", () => setSelectedDate(dateKey(new Date())));
+      el.addTaskButton.addEventListener("click", () => openTaskDialog());
+      el.taskForm.addEventListener("submit", saveTask);
+      el.dailyNotes.addEventListener("input", saveNotes);
+      el.calendarButton.addEventListener("click", openCalendar);
+      el.calendarPrevious.addEventListener("click", () => moveCalendar(-1));
+      el.calendarNext.addEventListener("click", () => moveCalendar(1));
+      el.exportButton.addEventListener("click", exportExcel);
+      el.settingsButton.addEventListener("click", () => openDialog(el.settingsDialog));
+      el.manageDropdownsButton.addEventListener("click", openDropdownManager);
+      el.manageDropdownsFromTask.addEventListener("click", openDropdownManager);
+      el.dropdownForm.addEventListener("submit", saveDropdownDefinition);
+      el.newDropdownButton.addEventListener("click", resetDropdownForm);
+      document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => document.getElementById(button.dataset.closeDialog).close()));
+      document.querySelectorAll("[data-calendar-view]").forEach((button) => button.addEventListener("click", () => {
+        state.calendarView = button.dataset.calendarView;
+        setActiveSegment("[data-calendar-view]", state.calendarView);
+        renderCalendar();
+      }));
+      document.querySelectorAll("[data-color-mode]").forEach((button) => button.addEventListener("click", () => {
+        state.colorMode = button.dataset.colorMode;
+        setActiveSegment("[data-color-mode]", state.colorMode);
+        renderCalendar();
+      }));
+
+      el.activeDate.value = state.selectedDate;
+      showAuth();
+      renderAll();
+      initializeFirebase();
+    }
+
+    function defaultData() {
+      return { tasks: DEFAULT_TASKS, dropdowns: DEFAULT_DROPDOWNS, days: {} };
+    }
+
+    function loadBackupData() {
+      const fallback = defaultData();
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem(OLD_STORAGE_KEY));
+        if (!saved || !Array.isArray(saved.tasks)) return fallback;
+        return migrate({
+          tasks: saved.tasks,
+          dropdowns: Array.isArray(saved.dropdowns) ? saved.dropdowns : DEFAULT_DROPDOWNS,
+          days: saved.days && typeof saved.days === "object" ? saved.days : {}
+        });
+      } catch {
+        return fallback;
+      }
+    }
+
+    function migrate(data) {
+      const dropdowns = mergeDropdowns(data.dropdowns);
+      const tasks = data.tasks.map((task) => {
+        if (Array.isArray(task.dropdowns)) {
+          return {
+            id: task.id || id(),
+            name: task.name || "Untitled task",
+            dropdowns: task.dropdowns
+              .filter((item) => dropdowns.some((definition) => definition.id === item.definitionId))
+              .map((item) => ({ definitionId: item.definitionId, defaultValue: item.defaultValue || "" }))
+          };
+        }
+        const dropdownsForTask = [];
+        ["time", "duration", "type", "priority"].forEach((field) => {
+          if (task[field]) dropdownsForTask.push({ definitionId: field, defaultValue: task[field] });
+        });
+        return { id: task.id || id(), name: task.name || "Untitled task", dropdowns: dropdownsForTask };
+      });
+      return { ...data, dropdowns, tasks };
+    }
+
+    function mergeDropdowns(savedDropdowns) {
+      const merged = DEFAULT_DROPDOWNS.map((item) => ({ ...item, options: [...item.options] }));
+      savedDropdowns.forEach((dropdown) => {
+        if (!dropdown || !dropdown.id || !dropdown.label || !Array.isArray(dropdown.options)) return;
+        const clean = { id: dropdown.id, label: dropdown.label, options: unique(dropdown.options) };
+        const index = merged.findIndex((item) => item.id === clean.id);
+        if (index >= 0) merged[index] = clean;
+        else merged.push(clean);
+      });
+      return merged;
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+      if (!currentUser || applyingRemoteData) return;
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(async () => {
+        try {
+          await setDoc(routineDocRef(), {
+            ...state.data,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+          setStatus("Synced");
+        } catch (error) {
+          setStatus(`Sync failed: ${friendlyError(error)}`);
+        }
+      }, 350);
+    }
+
+    function initializeFirebase() {
+      if (firebaseConfig.apiKey.includes("PASTE_")) {
+        el.authMessage.textContent = "Firebase config is not filled in yet. Paste your Firebase config into index.html.";
+        return;
+      }
+      try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        enableIndexedDbPersistence(db).catch(() => {});
+        onAuthStateChanged(auth, handleAuthState);
+      } catch (error) {
+        el.authMessage.textContent = `Firebase setup error: ${friendlyError(error)}`;
+      }
+    }
+
+    async function signIn(event) {
+      event.preventDefault();
+      await runAuthAction(() => signInWithEmailAndPassword(auth, el.emailInput.value.trim(), el.passwordInput.value));
+    }
+
+    async function signUp() {
+      await runAuthAction(() => createUserWithEmailAndPassword(auth, el.emailInput.value.trim(), el.passwordInput.value));
+    }
+
+    async function runAuthAction(action) {
+      if (!auth) {
+        el.authMessage.textContent = "Firebase is not configured yet.";
+        return;
+      }
+      el.authMessage.textContent = "";
+      el.signInButton.disabled = true;
+      el.signUpButton.disabled = true;
+      try {
+        await action();
+        el.passwordInput.value = "";
+      } catch (error) {
+        el.authMessage.textContent = friendlyError(error);
+      } finally {
+        el.signInButton.disabled = false;
+        el.signUpButton.disabled = false;
+      }
+    }
+
+    async function signOutUser() {
+      if (auth) await signOut(auth);
+    }
+
+    function handleAuthState(user) {
+      currentUser = user;
+      if (unsubscribeRoutine) {
+        unsubscribeRoutine();
+        unsubscribeRoutine = null;
+      }
+      if (!user) {
+        showAuth();
+        state.data = defaultData();
+        renderAll();
+        return;
+      }
+      el.userEmail.textContent = user.email || user.uid;
+      showApp();
+      setStatus("Loading cloud data...");
+      unsubscribeRoutine = onSnapshot(routineDocRef(), async (snapshot) => {
+        applyingRemoteData = true;
+        if (snapshot.exists()) {
+          state.data = migrate(snapshot.data());
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+        } else {
+          state.data = migrate(loadBackupData());
+          await setDoc(routineDocRef(), { ...state.data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+        }
+        applyingRemoteData = false;
+        renderAll();
+        setStatus("Synced");
+      }, (error) => {
+        applyingRemoteData = false;
+        setStatus(`Sync failed: ${friendlyError(error)}`);
+      });
+    }
+
+    function routineDocRef() {
+      return doc(db, "users", currentUser.uid, "routine", "main");
+    }
+
+    function showAuth() {
+      el.authScreen.hidden = false;
+      el.appShell.hidden = true;
+      setTimeout(() => el.emailInput.focus(), 0);
+    }
+
+    function showApp() {
+      el.authScreen.hidden = true;
+      el.appShell.hidden = false;
+    }
+
+    function setStatus(message) {
+      el.syncStatus.textContent = `Cloud sync: ${message}`;
+    }
+
+    function renderAll() {
+      renderHeading();
+      renderTasks();
+      renderSummary();
+      renderNotes();
+      renderCalendar();
+      renderDropdownManager();
+    }
+
+    function renderHeading() {
+      el.todayHeading.textContent = longDate(parseDateKey(state.selectedDate));
+    }
+
+    function renderTasks() {
+      const day = getDay(state.selectedDate);
+      el.taskList.innerHTML = "";
+      el.emptyTasks.hidden = state.data.tasks.length > 0;
+      state.data.tasks.forEach((task) => {
+        const record = day.tasks[task.id] || {};
+        const dropdowns = taskDropdowns(task);
+        const meta = dropdowns.map(({ definition, selected }) => `${definition.label}: ${selected || "Not set"}`).join(" | ");
+        const card = document.createElement("article");
+        card.className = `task-card ${record.done ? "done" : ""}`;
+        card.innerHTML = `
+          <input class="task-checkbox" type="checkbox" aria-label="Mark ${esc(task.name)} complete" ${record.done ? "checked" : ""}>
+          <div class="task-main">
+            <div class="task-title-row">
+              <div><div class="task-title">${esc(task.name)}</div><small>${esc(meta || "No dropdowns selected")}</small></div>
+              <div class="task-actions">
+                <button class="secondary" type="button" data-action="edit">Edit</button>
+                <button class="secondary" type="button" data-action="delete">Delete</button>
+              </div>
+            </div>
+            <div class="task-meta">${dropdowns.map(({ definition, selected }) => selectHtml(definition.label, definition.id, definition.options, selected)).join("")}</div>
+          </div>`;
+        card.querySelector(".task-checkbox").addEventListener("change", (event) => updateTaskRecord(task.id, { done: event.target.checked }));
+        card.querySelectorAll("select").forEach((select) => select.addEventListener("change", () => updateTaskRecord(task.id, { [select.dataset.field]: select.value })));
+        card.querySelector('[data-action="edit"]').addEventListener("click", () => openTaskDialog(task));
+        card.querySelector('[data-action="delete"]').addEventListener("click", () => deleteTask(task.id));
+        el.taskList.appendChild(card);
+      });
+    }
+
+    function selectHtml(label, field, options, selected) {
+      return `<label>${esc(label)}<select data-field="${esc(field)}"><option value="" ${selected ? "" : "selected"}>Not set</option>${options.map((option) => `<option value="${esc(option)}" ${option === selected ? "selected" : ""}>${esc(option)}</option>`).join("")}</select></label>`;
+    }
+
+    function renderSummary() {
+      const summary = daySummary(state.selectedDate);
+      el.completedCount.textContent = summary.completed;
+      el.totalCount.textContent = summary.total;
+      el.completionPercent.textContent = `${summary.percent}%`;
+    }
+
+    function renderNotes() {
+      el.dailyNotes.value = getDay(state.selectedDate).notes || "";
+    }
+
+    function saveNotes() {
+      getDay(state.selectedDate).notes = el.dailyNotes.value;
+      saveData();
+      renderCalendar();
+    }
+
+    function updateTaskRecord(taskId, patch) {
+      const day = getDay(state.selectedDate);
+      day.tasks[taskId] = { ...(day.tasks[taskId] || {}), ...patch };
+      saveData();
+      renderTasks();
+      renderSummary();
+      renderCalendar();
+    }
+
+    function taskDropdowns(task) {
+      const day = state.data.days[state.selectedDate] || { tasks: {} };
+      const record = day.tasks[task.id] || {};
+      return (task.dropdowns || []).map((taskDropdown) => {
+        const definition = dropdownDefinition(taskDropdown.definitionId);
+        if (!definition) return null;
+        return { definition, selected: record[definition.id] ?? taskDropdown.defaultValue ?? "" };
+      }).filter(Boolean);
+    }
+
+    function dropdownDefinition(dropdownId) {
+      return state.data.dropdowns.find((definition) => definition.id === dropdownId);
+    }
+
+    function renderTaskDropdownChoices(task = null) {
+      const selected = new Map((task?.dropdowns || []).map((item) => [item.definitionId, item.defaultValue || ""]));
+      el.taskDropdownChoices.innerHTML = "";
+      if (state.data.dropdowns.length === 0) {
+        el.taskDropdownChoices.innerHTML = `<p class="hint">No dropdowns exist yet. Use Manage to create one.</p>`;
+        return;
+      }
+      state.data.dropdowns.forEach((definition) => {
+        const isChecked = selected.has(definition.id);
+        const selectedValue = selected.get(definition.id) || "";
+        const row = document.createElement("label");
+        row.className = "dropdown-choice";
+        row.dataset.dropdownId = definition.id;
+        row.innerHTML = `
+          <input type="checkbox" ${isChecked ? "checked" : ""}>
+          <span><strong>${esc(definition.label)}</strong><small>${esc(definition.options.join(", "))}</small></span>
+          <select ${isChecked ? "" : "disabled"}><option value="" ${selectedValue ? "" : "selected"}>No default</option>${definition.options.map((option) => `<option value="${esc(option)}" ${option === selectedValue ? "selected" : ""}>${esc(option)}</option>`).join("")}</select>`;
+        const checkbox = row.querySelector("input");
+        const select = row.querySelector("select");
+        checkbox.addEventListener("change", () => {
+          select.disabled = !checkbox.checked;
+          if (!checkbox.checked) select.value = "";
+        });
+        el.taskDropdownChoices.appendChild(row);
+      });
+    }
+
+    function openTaskDialog(task = null) {
+      el.taskDialogTitle.textContent = task ? "Edit task" : "Add task";
+      el.taskId.value = task?.id || "";
+      el.taskName.value = task?.name || "";
+      renderTaskDropdownChoices(task);
+      openDialog(el.taskDialog);
+    }
+
+    function saveTask(event) {
+      event.preventDefault();
+      const dropdowns = Array.from(el.taskDropdownChoices.querySelectorAll(".dropdown-choice"))
+        .filter((choice) => choice.querySelector("input").checked)
+        .map((choice) => ({ definitionId: choice.dataset.dropdownId, defaultValue: choice.querySelector("select").value }));
+      const task = { id: el.taskId.value || id(), name: el.taskName.value.trim(), dropdowns };
+      if (!task.name) return;
+      const index = state.data.tasks.findIndex((item) => item.id === task.id);
+      if (index >= 0) state.data.tasks[index] = task;
+      else state.data.tasks.push(task);
+      saveData();
+      el.taskDialog.close();
+      renderAll();
+    }
+
+    function deleteTask(taskId) {
+      const task = state.data.tasks.find((item) => item.id === taskId);
+      if (!task || !confirm(`Remove "${task.name}" from your daily task list?`)) return;
+      state.data.tasks = state.data.tasks.filter((item) => item.id !== taskId);
+      saveData();
+      renderAll();
+    }
+
+    function openDropdownManager() {
+      renderDropdownManager();
+      resetDropdownForm();
+      openDialog(el.dropdownDialog);
+    }
+
+    function renderDropdownManager() {
+      if (!el.dropdownList) return;
+      el.dropdownList.innerHTML = "";
+      if (state.data.dropdowns.length === 0) {
+        el.dropdownList.innerHTML = `<div class="empty-state"><p>Create your first reusable dropdown.</p></div>`;
+        return;
+      }
+      state.data.dropdowns.forEach((definition) => {
+        const row = document.createElement("article");
+        row.className = "dropdown-row";
+        row.innerHTML = `<div><strong>${esc(definition.label)}</strong><small>${esc(definition.options.join(", "))}</small></div><div class="dropdown-row-actions"><button type="button" class="secondary" data-action="edit">Edit</button><button type="button" class="secondary" data-action="delete">Delete</button></div>`;
+        row.querySelector('[data-action="edit"]').addEventListener("click", () => editDropdownDefinition(definition.id));
+        row.querySelector('[data-action="delete"]').addEventListener("click", () => deleteDropdownDefinition(definition.id));
+        el.dropdownList.appendChild(row);
+      });
+    }
+
+    function resetDropdownForm() {
+      el.dropdownId.value = "";
+      el.dropdownLabel.value = "";
+      el.dropdownOptions.value = "";
+      el.dropdownLabel.focus();
+    }
+
+    function editDropdownDefinition(dropdownId) {
+      const definition = dropdownDefinition(dropdownId);
+      if (!definition) return;
+      el.dropdownId.value = definition.id;
+      el.dropdownLabel.value = definition.label;
+      el.dropdownOptions.value = definition.options.join("\n");
+      el.dropdownLabel.focus();
+    }
+
+    function saveDropdownDefinition(event) {
+      event.preventDefault();
+      const definition = { id: el.dropdownId.value || id(), label: el.dropdownLabel.value.trim(), options: unique(el.dropdownOptions.value.split("\n")) };
+      if (!definition.label || definition.options.length === 0) return;
+      const index = state.data.dropdowns.findIndex((item) => item.id === definition.id);
+      if (index >= 0) {
+        state.data.dropdowns[index] = definition;
+        cleanInvalidDropdownValues(definition);
+      } else {
+        state.data.dropdowns.push(definition);
+      }
+      saveData();
+      resetDropdownForm();
+      renderAll();
+    }
+
+    function deleteDropdownDefinition(dropdownId) {
+      const definition = dropdownDefinition(dropdownId);
+      if (!definition) return;
+      const inUseCount = state.data.tasks.filter((task) => (task.dropdowns || []).some((item) => item.definitionId === dropdownId)).length;
+      if (!confirm(`Delete "${definition.label}"? It will be removed from ${inUseCount} task${inUseCount === 1 ? "" : "s"}.`)) return;
+      state.data.dropdowns = state.data.dropdowns.filter((item) => item.id !== dropdownId);
+      state.data.tasks = state.data.tasks.map((task) => ({ ...task, dropdowns: (task.dropdowns || []).filter((item) => item.definitionId !== dropdownId) }));
+      Object.values(state.data.days).forEach((day) => Object.values(day.tasks || {}).forEach((record) => delete record[dropdownId]));
+      saveData();
+      resetDropdownForm();
+      renderAll();
+    }
+
+    function cleanInvalidDropdownValues(definition) {
+      state.data.tasks = state.data.tasks.map((task) => ({
+        ...task,
+        dropdowns: (task.dropdowns || []).map((item) => item.definitionId === definition.id
+          ? { ...item, defaultValue: definition.options.includes(item.defaultValue) ? item.defaultValue : "" }
+          : item)
+      }));
+      Object.values(state.data.days).forEach((day) => {
+        Object.values(day.tasks || {}).forEach((record) => {
+          if (record[definition.id] && !definition.options.includes(record[definition.id])) record[definition.id] = "";
+        });
+      });
+    }
+
+    function openCalendar() {
+      state.calendarDate = parseDateKey(state.selectedDate);
+      setActiveSegment("[data-calendar-view]", state.calendarView);
+      setActiveSegment("[data-color-mode]", state.colorMode);
+      renderCalendar();
+      openDialog(el.calendarDialog);
+    }
+
+    function renderCalendar() {
+      if (!el.calendarGrid) return;
+      el.calendarGrid.className = `calendar-grid ${state.calendarView}`;
+      el.calendarGrid.innerHTML = "";
+      el.calendarTitle.textContent = calendarTitle();
+      el.calendarRange.textContent = state.colorMode === "status" ? "Green means all daily goals are achieved." : "Darker green means more goals completed.";
+      calendarDates().forEach(({ date, label, muted = false }) => {
+        const key = dateKey(date);
+        const summary = state.calendarView === "year" ? monthSummary(date) : daySummary(key);
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = `calendar-cell ${muted ? "muted" : ""} ${calendarClass(summary)}`;
+        if (state.colorMode === "gradient") cell.style.background = `linear-gradient(135deg, rgba(46,139,87,${Math.max(0.08, summary.percent / 100)}), rgba(255,255,255,0.92))`;
+        cell.innerHTML = `<strong>${esc(label)}</strong><small>${esc(summary.label || `${summary.completed}/${summary.total} goals`)} | ${summary.percent}%</small><span class="bar"><span style="width:${summary.percent}%"></span></span>`;
+        cell.addEventListener("click", () => { setSelectedDate(key); state.calendarDate = parseDateKey(key); renderCalendar(); });
+        el.calendarGrid.appendChild(cell);
+      });
+    }
+
+    function calendarDates() {
+      const base = new Date(state.calendarDate);
+      if (state.calendarView === "day") return [{ date: base, label: longDate(base) }];
+      if (state.calendarView === "week") {
+        const start = startOfWeek(base);
+        return Array.from({ length: 7 }, (_, index) => {
+          const date = addDays(start, index);
+          return { date, label: date.toLocaleDateString(undefined, { weekday: "short", day: "numeric" }) };
+        });
+      }
+      if (state.calendarView === "year") {
+        return Array.from({ length: 12 }, (_, month) => {
+          const date = new Date(base.getFullYear(), month, 1);
+          return { date, label: date.toLocaleDateString(undefined, { month: "long" }) };
+        });
+      }
+      const first = new Date(base.getFullYear(), base.getMonth(), 1);
+      const gridStart = startOfWeek(first);
+      return Array.from({ length: 42 }, (_, index) => {
+        const date = addDays(gridStart, index);
+        return { date, label: String(date.getDate()), muted: date.getMonth() !== base.getMonth() };
+      });
+    }
+
+    function calendarTitle() {
+      const date = state.calendarDate;
+      if (state.calendarView === "day") return longDate(date);
+      if (state.calendarView === "week") return `${shortDate(startOfWeek(date))} - ${shortDate(addDays(startOfWeek(date), 6))}`;
+      if (state.calendarView === "year") return String(date.getFullYear());
+      return date.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    }
+
+    function moveCalendar(direction) {
+      const date = new Date(state.calendarDate);
+      if (state.calendarView === "day") date.setDate(date.getDate() + direction);
+      if (state.calendarView === "week") date.setDate(date.getDate() + direction * 7);
+      if (state.calendarView === "month") date.setMonth(date.getMonth() + direction);
+      if (state.calendarView === "year") date.setFullYear(date.getFullYear() + direction);
+      state.calendarDate = date;
+      renderCalendar();
+    }
+
+    function setActiveSegment(selector, value) {
+      document.querySelectorAll(selector).forEach((button) => {
+        button.classList.toggle("active", button.dataset.calendarView === value || button.dataset.colorMode === value);
+      });
+    }
+
+    function setSelectedDate(key) {
+      if (!key) return;
+      state.selectedDate = key;
+      el.activeDate.value = key;
+      renderAll();
+    }
+
+    function moveSelectedDate(days) {
+      setSelectedDate(dateKey(addDays(parseDateKey(state.selectedDate), days)));
+    }
+
+    function getDay(key) {
+      if (!state.data.days[key]) state.data.days[key] = { notes: "", tasks: {} };
+      return state.data.days[key];
+    }
+
+    function daySummary(key) {
+      const day = state.data.days[key] || { tasks: {} };
+      const total = state.data.tasks.length;
+      const completed = state.data.tasks.filter((task) => day.tasks[task.id]?.done).length;
+      return { completed, total, percent: total ? Math.round((completed / total) * 100) : 0 };
+    }
+
+    function monthSummary(date) {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const days = new Date(year, month + 1, 0).getDate();
+      let completed = 0, total = 0, completeDays = 0, trackedDays = 0;
+      for (let day = 1; day <= days; day++) {
+        const key = dateKey(new Date(year, month, day));
+        if (!state.data.days[key]) continue;
+        const summary = daySummary(key);
+        completed += summary.completed;
+        total += summary.total;
+        trackedDays++;
+        if (summary.total > 0 && summary.completed === summary.total) completeDays++;
+      }
+      return { completed, total, percent: total ? Math.round((completed / total) * 100) : 0, label: trackedDays ? `${completeDays}/${trackedDays} complete days` : "No tracked days" };
+    }
+
+    function calendarClass(summary) {
+      if (summary.total === 0) return "missed";
+      if (summary.completed === summary.total) return "complete";
+      if (summary.completed > 0) return "partial";
+      return "missed";
+    }
+
+    function exportExcel() {
+      const rows = exportRows();
+      const headers = ["Date", "Task", ...state.data.dropdowns.map((definition) => definition.label), "Status", "Completed Goals", "Total Goals", "Day Completion %", "Daily Notes"];
+      const body = rows.map((row) => {
+        const style = row.status === "Completed" ? "sComplete" : row.percent > 0 ? "sPartial" : "sMissed";
+        return `<Row>${cell(row.date, style)}${cell(row.task, style)}${state.data.dropdowns.map((definition) => cell(row.dropdownValues[definition.id] || "", style)).join("")}${cell(row.status, style)}${cell(row.completed, style, "Number")}${cell(row.total, style, "Number")}${cell(row.percent / 100, "Percent", "Number")}${cell(row.notes, style)}</Row>`;
+      }).join("");
+      const xml = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="Default"><Alignment ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="11"/></Style><Style ss:ID="sHeader"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#176B87" ss:Pattern="Solid"/></Style><Style ss:ID="sComplete"><Interior ss:Color="#E9F7EE" ss:Pattern="Solid"/></Style><Style ss:ID="sPartial"><Interior ss:Color="#FFF6DF" ss:Pattern="Solid"/></Style><Style ss:ID="sMissed"><Interior ss:Color="#FDECEA" ss:Pattern="Solid"/></Style><Style ss:ID="Percent"><NumberFormat ss:Format="0%"/></Style></Styles><Worksheet ss:Name="Routine Log"><Table>${headers.map((_, index) => `<Column ss:Width="${index === 1 ? 190 : index === headers.length - 1 ? 260 : 105}"/>`).join("")}<Row>${headers.map((header) => cell(header, "sHeader")).join("")}</Row>${body}</Table></Worksheet></Workbook>`;
+      const blob = new Blob([xml], { type: "application/vnd.ms-excel;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `daily-routine-${dateKey(new Date())}.xls`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(link.href);
+    }
+
+    function exportRows() {
+      const dates = new Set(Object.keys(state.data.days));
+      dates.add(state.selectedDate);
+      return Array.from(dates).sort().flatMap((key) => {
+        const day = getDay(key);
+        const summary = daySummary(key);
+        if (state.data.tasks.length === 0) return [{ date: key, task: "No tasks configured", dropdownValues: {}, status: "No goals", completed: 0, total: 0, percent: 0, notes: day.notes || "" }];
+        return state.data.tasks.map((task) => {
+          const record = day.tasks[task.id] || {};
+          const dropdownValues = {};
+          state.data.dropdowns.forEach((definition) => {
+            const taskDropdown = (task.dropdowns || []).find((item) => item.definitionId === definition.id);
+            dropdownValues[definition.id] = taskDropdown ? (record[definition.id] ?? taskDropdown.defaultValue ?? "") : "";
+          });
+          return { date: key, task: task.name, dropdownValues, status: record.done ? "Completed" : "Not completed", completed: summary.completed, total: summary.total, percent: summary.percent, notes: day.notes || "" };
+        });
+      });
+    }
+
+    function cell(value, style, type = "String") {
+      return `<Cell ss:StyleID="${style}"><Data ss:Type="${type}">${xml(value)}</Data></Cell>`;
+    }
+
+    function openDialog(dialog) {
+      if (typeof dialog.showModal === "function") dialog.showModal();
+      else dialog.setAttribute("open", "");
+    }
+
+    function dateKey(date) {
+      const clean = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      return `${clean.getFullYear()}-${String(clean.getMonth() + 1).padStart(2, "0")}-${String(clean.getDate()).padStart(2, "0")}`;
+    }
+
+    function parseDateKey(key) {
+      const [year, month, day] = key.split("-").map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    function addDays(date, days) {
+      const next = new Date(date);
+      next.setDate(next.getDate() + days);
+      return next;
+    }
+
+    function startOfWeek(date) {
+      const next = new Date(date);
+      next.setDate(next.getDate() - next.getDay());
+      return next;
+    }
+
+    function longDate(date) {
+      return date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+    }
+
+    function shortDate(date) {
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+
+    function esc(value) {
+      return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+    }
+
+    function xml(value) {
+      return esc(value).replaceAll("\n", "&#10;");
+    }
+
+    function unique(options) {
+      return Array.from(new Set(options.map((option) => String(option).trim()).filter(Boolean)));
+    }
+
+    function friendlyError(error) {
+      const message = error?.message || String(error);
+      return message.replace(/^Firebase:\s*/i, "").replace(/\s*\(auth\/.*\)\.?$/i, ".").replace(/\s*\(firestore\/.*\)\.?$/i, ".");
+    }
+
+    function id() {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+      return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+  </script>
+</body>
+</html>
