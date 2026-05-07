@@ -1,9 +1,39 @@
 const STORAGE_KEY = "dailyRoutineChecklist.v1";
 
+const DEFAULT_DROPDOWNS = [
+  { id: "time", label: "Time", options: ["06:00", "06:30", "07:00", "07:30", "08:00", "09:00", "12:00", "18:00", "21:00"] },
+  { id: "duration", label: "Duration", options: ["5 min", "10 min", "15 min", "30 min", "45 min", "60 min", "90 min"] },
+  { id: "type", label: "Type", options: ["Health", "Work", "Study", "Home", "Mindfulness", "Custom"] },
+  { id: "priority", label: "Priority", options: ["Low", "Medium", "High"] },
+  { id: "mood", label: "Mood", options: ["Great", "Good", "Okay", "Hard", "Skipped"] }
+];
+
 const DEFAULT_TASKS = [
-  { id: createId(), name: "Wake up on time", time: "06:30", duration: "5 min", type: "Health", priority: "High" },
-  { id: createId(), name: "Exercise or walk", time: "07:00", duration: "30 min", type: "Health", priority: "High" },
-  { id: createId(), name: "Plan the day", time: "09:00", duration: "10 min", type: "Work", priority: "Medium" }
+  {
+    id: createId(),
+    name: "Wake up on time",
+    dropdowns: [
+      { definitionId: "time", defaultValue: "06:30" },
+      { definitionId: "priority", defaultValue: "High" }
+    ]
+  },
+  {
+    id: createId(),
+    name: "Exercise or walk",
+    dropdowns: [
+      { definitionId: "time", defaultValue: "07:00" },
+      { definitionId: "duration", defaultValue: "30 min" },
+      { definitionId: "type", defaultValue: "Health" }
+    ]
+  },
+  {
+    id: createId(),
+    name: "Plan the day",
+    dropdowns: [
+      { definitionId: "duration", defaultValue: "10 min" },
+      { definitionId: "type", defaultValue: "Work" }
+    ]
+  }
 ];
 
 const state = {
@@ -31,9 +61,11 @@ function cacheElements() {
     "exportButton", "settingsButton", "lockButton", "previousDay", "nextDay", "todayButton",
     "activeDate", "completedCount", "totalCount", "completionPercent", "addTaskButton", "taskList",
     "emptyTasks", "dailyNotes", "taskDialog", "taskForm", "taskDialogTitle", "taskId", "taskName",
-    "taskTime", "taskDuration", "taskType", "taskPriority", "calendarDialog", "calendarRange",
+    "taskDropdownChoices", "manageDropdownsFromTask", "calendarDialog", "calendarRange",
     "calendarGrid", "calendarTitle", "calendarPrevious", "calendarNext", "settingsDialog",
-    "pinChangeForm", "currentPin", "newPin", "pinChangeMessage"
+    "pinChangeForm", "currentPin", "newPin", "pinChangeMessage", "manageDropdownsButton",
+    "dropdownDialog", "dropdownList", "dropdownForm", "dropdownId", "dropdownLabel",
+    "dropdownOptions", "newDropdownButton"
   ].forEach((id) => {
     els[id] = document.getElementById(id);
   });
@@ -55,6 +87,10 @@ function bindEvents() {
   els.exportButton.addEventListener("click", exportExcel);
   els.settingsButton.addEventListener("click", () => openDialog(els.settingsDialog));
   els.pinChangeForm.addEventListener("submit", changePin);
+  els.manageDropdownsButton.addEventListener("click", openDropdownManager);
+  els.manageDropdownsFromTask.addEventListener("click", openDropdownManager);
+  els.dropdownForm.addEventListener("submit", saveDropdownDefinition);
+  els.newDropdownButton.addEventListener("click", resetDropdownForm);
 
   document.querySelectorAll("[data-close-dialog]").forEach((button) => {
     button.addEventListener("click", () => document.getElementById(button.dataset.closeDialog).close());
@@ -81,20 +117,66 @@ function loadData() {
   const fallback = {
     pin: "0000",
     tasks: DEFAULT_TASKS,
+    dropdowns: DEFAULT_DROPDOWNS,
     days: {}
   };
 
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!saved || !Array.isArray(saved.tasks)) return fallback;
-    return {
+    return migrateData({
       pin: /^\d{4}$/.test(saved.pin) ? saved.pin : "0000",
       tasks: saved.tasks,
+      dropdowns: Array.isArray(saved.dropdowns) ? saved.dropdowns : DEFAULT_DROPDOWNS,
       days: saved.days && typeof saved.days === "object" ? saved.days : {}
-    };
+    });
   } catch {
     return fallback;
   }
+}
+
+function migrateData(data) {
+  const dropdowns = mergeDropdownDefinitions(data.dropdowns);
+  const tasks = data.tasks.map((task) => {
+    if (Array.isArray(task.dropdowns)) {
+      return {
+        id: task.id || createId(),
+        name: task.name || "Untitled task",
+        dropdowns: task.dropdowns
+          .filter((item) => dropdowns.some((definition) => definition.id === item.definitionId))
+          .map((item) => ({ definitionId: item.definitionId, defaultValue: item.defaultValue || "" }))
+      };
+    }
+
+    const migratedDropdowns = [];
+    ["time", "duration", "type", "priority"].forEach((field) => {
+      if (task[field]) migratedDropdowns.push({ definitionId: field, defaultValue: task[field] });
+    });
+
+    return {
+      id: task.id || createId(),
+      name: task.name || "Untitled task",
+      dropdowns: migratedDropdowns
+    };
+  });
+
+  return { ...data, dropdowns, tasks };
+}
+
+function mergeDropdownDefinitions(savedDropdowns) {
+  const merged = [...DEFAULT_DROPDOWNS];
+  savedDropdowns.forEach((dropdown) => {
+    if (!dropdown?.id || !dropdown?.label || !Array.isArray(dropdown.options)) return;
+    const clean = {
+      id: dropdown.id,
+      label: dropdown.label,
+      options: uniqueOptions(dropdown.options)
+    };
+    const existingIndex = merged.findIndex((item) => item.id === clean.id);
+    if (existingIndex >= 0) merged[existingIndex] = clean;
+    else merged.push(clean);
+  });
+  return merged;
 }
 
 function saveData() {
@@ -155,6 +237,7 @@ function renderAll() {
   renderSummary();
   renderNotes();
   renderCalendar();
+  renderDropdownManager();
   ensureIcons();
 }
 
@@ -169,6 +252,8 @@ function renderTasks() {
 
   state.data.tasks.forEach((task) => {
     const taskRecord = day.tasks[task.id] || {};
+    const taskDropdowns = getTaskDropdowns(task);
+    const meta = taskDropdowns.map(({ definition, selected }) => `${definition.label}: ${selected || "Not set"}`).join(" • ");
     const card = document.createElement("article");
     card.className = `task-card ${taskRecord.done ? "done" : ""}`;
     card.innerHTML = `
@@ -177,7 +262,7 @@ function renderTasks() {
         <div class="task-title-row">
           <div>
             <div class="task-title">${escapeHtml(task.name)}</div>
-            <small>${escapeHtml(task.type)} • ${escapeHtml(task.priority)} priority</small>
+            <small>${escapeHtml(meta || "No dropdowns selected")}</small>
           </div>
           <div class="task-actions">
             <button class="icon-only subtle" type="button" data-action="edit" title="Edit task" aria-label="Edit task"><i data-lucide="pencil"></i></button>
@@ -185,10 +270,7 @@ function renderTasks() {
           </div>
         </div>
         <div class="task-meta">
-          ${selectField("Time", "time", timeOptions(task.time), taskRecord.time || task.time || "")}
-          ${selectField("Duration", "duration", ["5 min", "10 min", "15 min", "30 min", "45 min", "60 min", "90 min"], taskRecord.duration || task.duration)}
-          ${selectField("Type", "type", ["Health", "Work", "Study", "Home", "Mindfulness", "Custom"], taskRecord.type || task.type)}
-          ${selectField("Mood", "mood", ["Great", "Good", "Okay", "Hard", "Skipped"], taskRecord.mood || "Good")}
+          ${taskDropdowns.map(({ definition, selected }) => selectField(definition.label, definition.id, definition.options, selected)).join("")}
         </div>
       </div>
     `;
@@ -212,18 +294,11 @@ function selectField(label, field, options, selected) {
     <label>
       ${label}
       <select data-field="${field}">
+        <option value="" ${selected ? "" : "selected"}>Not set</option>
         ${options.map((option) => `<option value="${escapeHtml(option)}" ${option === selected ? "selected" : ""}>${escapeHtml(option)}</option>`).join("")}
       </select>
     </label>
   `;
-}
-
-function timeOptions(defaultTime) {
-  const options = new Set(["", defaultTime].filter(Boolean));
-  for (let hour = 4; hour <= 23; hour += 1) {
-    ["00", "30"].forEach((minute) => options.add(`${String(hour).padStart(2, "0")}:${minute}`));
-  }
-  return Array.from(options);
 }
 
 function renderSummary() {
@@ -254,26 +329,78 @@ function updateTaskRecord(taskId, patch) {
   ensureIcons();
 }
 
+function getTaskDropdowns(task) {
+  const day = state.data.days[state.selectedDate] || { tasks: {} };
+  const taskRecord = day.tasks[task.id] || {};
+  return (task.dropdowns || []).map((taskDropdown) => {
+    const definition = getDropdownDefinition(taskDropdown.definitionId);
+    if (!definition) return null;
+    const selected = taskRecord[definition.id] ?? taskDropdown.defaultValue ?? "";
+    return { definition, selected };
+  }).filter(Boolean);
+}
+
+function getDropdownDefinition(dropdownId) {
+  return state.data.dropdowns.find((definition) => definition.id === dropdownId);
+}
+
+function renderTaskDropdownChoices(task = null) {
+  const selected = new Map((task?.dropdowns || []).map((item) => [item.definitionId, item.defaultValue || ""]));
+  els.taskDropdownChoices.innerHTML = "";
+
+  if (state.data.dropdowns.length === 0) {
+    els.taskDropdownChoices.innerHTML = `<p class="hint">No dropdowns exist yet. Use Manage to create one.</p>`;
+    return;
+  }
+
+  state.data.dropdowns.forEach((definition) => {
+    const isChecked = selected.has(definition.id);
+    const selectedValue = selected.get(definition.id) || "";
+    const row = document.createElement("label");
+    row.className = "dropdown-choice";
+    row.dataset.dropdownId = definition.id;
+    row.innerHTML = `
+      <input type="checkbox" ${isChecked ? "checked" : ""}>
+      <span>
+        <strong>${escapeHtml(definition.label)}</strong>
+        <small>${escapeHtml(definition.options.join(", "))}</small>
+      </span>
+      <select ${isChecked ? "" : "disabled"}>
+        <option value="" ${selectedValue ? "" : "selected"}>No default</option>
+        ${definition.options.map((option) => `<option value="${escapeHtml(option)}" ${option === selectedValue ? "selected" : ""}>${escapeHtml(option)}</option>`).join("")}
+      </select>
+    `;
+    const checkbox = row.querySelector("input[type='checkbox']");
+    const select = row.querySelector("select");
+    checkbox.addEventListener("change", () => {
+      select.disabled = !checkbox.checked;
+      if (!checkbox.checked) select.value = "";
+    });
+    els.taskDropdownChoices.appendChild(row);
+  });
+}
+
 function openTaskDialog(task = null) {
   els.taskDialogTitle.textContent = task ? "Edit task" : "Add task";
   els.taskId.value = task?.id || "";
   els.taskName.value = task?.name || "";
-  els.taskTime.value = task?.time || "";
-  els.taskDuration.value = task?.duration || "15 min";
-  els.taskType.value = task?.type || "Health";
-  els.taskPriority.value = task?.priority || "Medium";
+  renderTaskDropdownChoices(task);
   openDialog(els.taskDialog);
 }
 
 function saveTask(event) {
   event.preventDefault();
+  const dropdowns = Array.from(els.taskDropdownChoices.querySelectorAll(".dropdown-choice"))
+    .filter((choice) => choice.querySelector("input[type='checkbox']").checked)
+    .map((choice) => ({
+      definitionId: choice.dataset.dropdownId,
+      defaultValue: choice.querySelector("select").value
+    }));
+
   const task = {
     id: els.taskId.value || createId(),
     name: els.taskName.value.trim(),
-    time: els.taskTime.value,
-    duration: els.taskDuration.value,
-    type: els.taskType.value,
-    priority: els.taskPriority.value
+    dropdowns
   };
 
   if (!task.name) return;
@@ -300,6 +427,123 @@ function deleteTask(taskId) {
   state.data.tasks = state.data.tasks.filter((item) => item.id !== taskId);
   saveData();
   renderAll();
+}
+
+function openDropdownManager() {
+  renderDropdownManager();
+  resetDropdownForm();
+  openDialog(els.dropdownDialog);
+}
+
+function renderDropdownManager() {
+  if (!els.dropdownList) return;
+  els.dropdownList.innerHTML = "";
+
+  if (state.data.dropdowns.length === 0) {
+    els.dropdownList.innerHTML = `<div class="empty-state"><i data-lucide="list-plus"></i><p>Create your first reusable dropdown.</p></div>`;
+    return;
+  }
+
+  state.data.dropdowns.forEach((definition) => {
+    const row = document.createElement("article");
+    row.className = "dropdown-row";
+    row.innerHTML = `
+      <div>
+        <strong>${escapeHtml(definition.label)}</strong>
+        <small>${escapeHtml(definition.options.join(", "))}</small>
+      </div>
+      <div class="dropdown-row-actions">
+        <button type="button" class="secondary" data-action="edit"><i data-lucide="pencil"></i><span>Edit</span></button>
+        <button type="button" class="secondary" data-action="delete"><i data-lucide="trash-2"></i><span>Delete</span></button>
+      </div>
+    `;
+    row.querySelector('[data-action="edit"]').addEventListener("click", () => editDropdownDefinition(definition.id));
+    row.querySelector('[data-action="delete"]').addEventListener("click", () => deleteDropdownDefinition(definition.id));
+    els.dropdownList.appendChild(row);
+  });
+  ensureIcons();
+}
+
+function resetDropdownForm() {
+  els.dropdownId.value = "";
+  els.dropdownLabel.value = "";
+  els.dropdownOptions.value = "";
+  els.dropdownLabel.focus();
+}
+
+function editDropdownDefinition(dropdownId) {
+  const definition = getDropdownDefinition(dropdownId);
+  if (!definition) return;
+  els.dropdownId.value = definition.id;
+  els.dropdownLabel.value = definition.label;
+  els.dropdownOptions.value = definition.options.join("\n");
+  els.dropdownLabel.focus();
+}
+
+function saveDropdownDefinition(event) {
+  event.preventDefault();
+  const id = els.dropdownId.value || createId();
+  const label = els.dropdownLabel.value.trim();
+  const options = uniqueOptions(els.dropdownOptions.value.split("\n"));
+
+  if (!label || options.length === 0) return;
+
+  const definition = { id, label, options };
+  const existingIndex = state.data.dropdowns.findIndex((item) => item.id === id);
+  if (existingIndex >= 0) {
+    state.data.dropdowns[existingIndex] = definition;
+    cleanInvalidDropdownValues(definition);
+  } else {
+    state.data.dropdowns.push(definition);
+  }
+
+  saveData();
+  renderDropdownManager();
+  renderTaskDropdownChoices(state.data.tasks.find((task) => task.id === els.taskId.value) || null);
+  resetDropdownForm();
+  renderAll();
+}
+
+function deleteDropdownDefinition(dropdownId) {
+  const definition = getDropdownDefinition(dropdownId);
+  if (!definition) return;
+  const inUseCount = state.data.tasks.filter((task) => (task.dropdowns || []).some((item) => item.definitionId === dropdownId)).length;
+  const confirmed = confirm(`Delete "${definition.label}"? It will be removed from ${inUseCount} task${inUseCount === 1 ? "" : "s"} and past day values.`);
+  if (!confirmed) return;
+
+  state.data.dropdowns = state.data.dropdowns.filter((item) => item.id !== dropdownId);
+  state.data.tasks = state.data.tasks.map((task) => ({
+    ...task,
+    dropdowns: (task.dropdowns || []).filter((item) => item.definitionId !== dropdownId)
+  }));
+  Object.values(state.data.days).forEach((day) => {
+    Object.values(day.tasks || {}).forEach((record) => delete record[dropdownId]);
+  });
+
+  saveData();
+  resetDropdownForm();
+  renderAll();
+}
+
+function cleanInvalidDropdownValues(definition) {
+  state.data.tasks = state.data.tasks.map((task) => ({
+    ...task,
+    dropdowns: (task.dropdowns || []).map((item) => {
+      if (item.definitionId !== definition.id) return item;
+      return {
+        ...item,
+        defaultValue: definition.options.includes(item.defaultValue) ? item.defaultValue : ""
+      };
+    })
+  }));
+
+  Object.values(state.data.days).forEach((day) => {
+    Object.values(day.tasks || {}).forEach((record) => {
+      if (record[definition.id] && !definition.options.includes(record[definition.id])) {
+        record[definition.id] = "";
+      }
+    });
+  });
 }
 
 function openCalendar() {
@@ -497,11 +741,7 @@ function buildExportRows() {
       return [{
         date: dateKey,
         task: "No tasks configured",
-        type: "",
-        priority: "",
-        time: "",
-        duration: "",
-        mood: "",
+        dropdownValues: {},
         status: "No goals",
         completed: 0,
         total: 0,
@@ -512,14 +752,15 @@ function buildExportRows() {
 
     return state.data.tasks.map((task) => {
       const record = day.tasks[task.id] || {};
+      const dropdownValues = {};
+      state.data.dropdowns.forEach((definition) => {
+        const taskDropdown = (task.dropdowns || []).find((item) => item.definitionId === definition.id);
+        dropdownValues[definition.id] = taskDropdown ? (record[definition.id] ?? taskDropdown.defaultValue ?? "") : "";
+      });
       return {
         date: dateKey,
         task: task.name,
-        type: record.type || task.type,
-        priority: task.priority,
-        time: record.time || task.time || "",
-        duration: record.duration || task.duration,
-        mood: record.mood || "",
+        dropdownValues,
         status: record.done ? "Completed" : "Not completed",
         completed: summary.completed,
         total: summary.total,
@@ -531,18 +772,15 @@ function buildExportRows() {
 }
 
 function buildWorkbookXml(rows) {
-  const headers = ["Date", "Task", "Type", "Priority", "Time", "Duration", "Mood", "Status", "Completed Goals", "Total Goals", "Day Completion %", "Daily Notes"];
+  const dropdownHeaders = state.data.dropdowns.map((definition) => definition.label);
+  const headers = ["Date", "Task", ...dropdownHeaders, "Status", "Completed Goals", "Total Goals", "Day Completion %", "Daily Notes"];
   const bodyRows = rows.map((row) => {
     const style = row.status === "Completed" ? "sComplete" : row.percent > 0 ? "sPartial" : "sMissed";
     return `
       <Row ss:AutoFitHeight="1">
         ${cell(row.date, style)}
         ${cell(row.task, style)}
-        ${cell(row.type, style)}
-        ${cell(row.priority, style)}
-        ${cell(row.time, style)}
-        ${cell(row.duration, style)}
-        ${cell(row.mood, style)}
+        ${state.data.dropdowns.map((definition) => cell(row.dropdownValues[definition.id] || "", style)).join("")}
         ${cell(row.status, style)}
         ${cell(row.completed, style, "Number")}
         ${cell(row.total, style, "Number")}
@@ -568,14 +806,12 @@ function buildWorkbookXml(rows) {
   </Styles>
   <Worksheet ss:Name="Routine Log">
     <Table>
-      <Column ss:Width="86"/><Column ss:Width="190"/><Column ss:Width="90"/><Column ss:Width="80"/>
-      <Column ss:Width="70"/><Column ss:Width="85"/><Column ss:Width="80"/><Column ss:Width="105"/>
-      <Column ss:Width="105"/><Column ss:Width="90"/><Column ss:Width="110"/><Column ss:Width="260"/>
+      ${buildColumnXml(headers.length)}
       <Row ss:AutoFitHeight="1">${headers.map((header) => cell(header, "sHeader")).join("")}</Row>
       ${bodyRows}
     </Table>
     <ConditionalFormatting xmlns="urn:schemas-microsoft-com:office:excel">
-      <Range>R2C11:R${Math.max(rows.length + 1, 2)}C11</Range>
+      <Range>R2C${headers.length - 1}:R${Math.max(rows.length + 1, 2)}C${headers.length - 1}</Range>
       <Condition>
         <Value1>0.999</Value1>
         <Format Style="background:#E9F7EE"/>
@@ -587,6 +823,13 @@ function buildWorkbookXml(rows) {
     </WorksheetOptions>
   </Worksheet>
 </Workbook>`;
+}
+
+function buildColumnXml(count) {
+  return Array.from({ length: count }, (_, index) => {
+    const width = index === 1 ? 190 : index === count - 1 ? 260 : 105;
+    return `<Column ss:Width="${width}"/>`;
+  }).join("");
 }
 
 function cell(value, styleId, type = "String", dataStyle = "") {
@@ -655,6 +898,10 @@ function escapeHtml(value) {
 
 function escapeXml(value) {
   return escapeHtml(value).replaceAll("\n", "&#10;");
+}
+
+function uniqueOptions(options) {
+  return Array.from(new Set(options.map((option) => String(option).trim()).filter(Boolean)));
 }
 
 function createId() {
