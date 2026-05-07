@@ -20,6 +20,11 @@
   box-sizing: border-box;
 }
 
+[hidden],
+.is-hidden {
+  display: none !important;
+}
+
 body {
   min-height: 100vh;
   margin: 0;
@@ -93,8 +98,3 @@ textarea {
   color: var(--ink);
   padding: 11px 12px;
   outline: none;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
