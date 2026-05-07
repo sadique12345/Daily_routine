@@ -44,9 +44,18 @@
         padding: 26px 0 42px;
       }
     </style>
-    <link rel="stylesheet" href="styles.css?v=20260507-2">
+    <link rel="stylesheet" href="styles.css?v=20260507-3">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-    <script src="app.js?v=20260507-2" defer></script>
+    <script src="app.js?v=20260507-3" defer></script>
+    <script>
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          if (window.ROUTINE_APP_READY) return;
+          const error = document.getElementById("pinError");
+          if (error) error.textContent = "App script did not load completely. Re-upload the full app.js file.";
+        }, 800);
+      });
+    </script>
   </head>
   <body>
     <div id="lockScreen" class="lock-screen">
@@ -98,3 +107,158 @@
         <div class="summary-item">
           <span id="completedCount">0</span>
           <small>Completed</small>
+        </div>
+        <div class="summary-item">
+          <span id="totalCount">0</span>
+          <small>Total goals</small>
+        </div>
+        <div class="summary-item">
+          <span id="completionPercent">0%</span>
+          <small>Progress</small>
+        </div>
+      </section>
+
+      <section class="workspace-grid">
+        <section class="panel checklist-panel" aria-labelledby="checklistTitle">
+          <div class="panel-header">
+            <div>
+              <h2 id="checklistTitle">Today’s Tasks</h2>
+              <p>Check off goals and record useful details.</p>
+            </div>
+            <button id="addTaskButton" type="button"><i data-lucide="plus"></i><span>Add task</span></button>
+          </div>
+          <div id="taskList" class="task-list"></div>
+          <div id="emptyTasks" class="empty-state">
+            <i data-lucide="list-plus"></i>
+            <p>Add your first daily task to begin tracking your routine.</p>
+          </div>
+        </section>
+
+        <aside class="panel notes-panel" aria-labelledby="notesTitle">
+          <div class="panel-header compact">
+            <h2 id="notesTitle">Daily Notes</h2>
+          </div>
+          <textarea id="dailyNotes" rows="12" placeholder="Notes for this day..."></textarea>
+          <p class="hint">Notes are saved automatically for the selected date.</p>
+        </aside>
+      </section>
+    </main>
+
+    <dialog id="taskDialog" class="modal">
+      <form id="taskForm" method="dialog">
+        <div class="modal-header">
+          <h2 id="taskDialogTitle">Add task</h2>
+          <button class="icon-only subtle" value="cancel" type="button" data-close-dialog="taskDialog" title="Close" aria-label="Close"><i data-lucide="x"></i></button>
+        </div>
+        <input type="hidden" id="taskId">
+        <label>
+          Task name
+          <input id="taskName" type="text" maxlength="80" placeholder="Morning walk" required>
+        </label>
+        <section class="task-dropdown-picker" aria-labelledby="taskDropdownPickerTitle">
+          <div class="inline-header">
+            <div>
+              <h3 id="taskDropdownPickerTitle">Dropdowns for this task</h3>
+              <p>Select only the fields that make sense for this task. Defaults are optional.</p>
+            </div>
+            <button id="manageDropdownsFromTask" type="button" class="secondary"><i data-lucide="sliders-horizontal"></i><span>Manage</span></button>
+          </div>
+          <div id="taskDropdownChoices" class="dropdown-choice-list"></div>
+        </section>
+        <div class="modal-actions">
+          <button type="button" class="secondary" data-close-dialog="taskDialog">Cancel</button>
+          <button type="submit">Save task</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="calendarDialog" class="modal calendar-modal">
+      <section>
+        <div class="modal-header">
+          <div>
+            <h2>Calendar</h2>
+            <p id="calendarRange">Progress overview</p>
+          </div>
+          <button class="icon-only subtle" type="button" data-close-dialog="calendarDialog" title="Close" aria-label="Close"><i data-lucide="x"></i></button>
+        </div>
+        <div class="calendar-toolbar">
+          <div class="segmented" role="tablist" aria-label="Calendar view">
+            <button type="button" data-calendar-view="day" class="active">Day</button>
+            <button type="button" data-calendar-view="week">Week</button>
+            <button type="button" data-calendar-view="month">Month</button>
+            <button type="button" data-calendar-view="year">Year</button>
+          </div>
+          <div class="segmented" role="tablist" aria-label="Calendar colour mode">
+            <button type="button" data-color-mode="status" class="active">All / not all</button>
+            <button type="button" data-color-mode="gradient">Goal gradient</button>
+          </div>
+        </div>
+        <div class="calendar-nav">
+          <button id="calendarPrevious" class="icon-only" type="button" title="Previous" aria-label="Previous"><i data-lucide="chevron-left"></i></button>
+          <strong id="calendarTitle">Today</strong>
+          <button id="calendarNext" class="icon-only" type="button" title="Next" aria-label="Next"><i data-lucide="chevron-right"></i></button>
+        </div>
+        <div id="calendarGrid" class="calendar-grid"></div>
+        <div class="legend">
+          <span><i class="swatch complete"></i> All goals achieved</span>
+          <span><i class="swatch partial"></i> Some goals achieved</span>
+          <span><i class="swatch missed"></i> Not achieved</span>
+        </div>
+      </section>
+    </dialog>
+
+    <dialog id="settingsDialog" class="modal">
+      <form id="pinChangeForm" method="dialog">
+        <div class="modal-header">
+          <h2>Settings</h2>
+          <button class="icon-only subtle" type="button" data-close-dialog="settingsDialog" title="Close" aria-label="Close"><i data-lucide="x"></i></button>
+        </div>
+        <label>
+          Current PIN
+          <input id="currentPin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required>
+        </label>
+        <label>
+          New 4 digit PIN
+          <input id="newPin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required>
+        </label>
+        <button id="manageDropdownsButton" type="button" class="secondary"><i data-lucide="sliders-horizontal"></i><span>Manage task dropdowns</span></button>
+        <span id="pinChangeMessage" class="form-error" role="alert"></span>
+        <div class="modal-actions">
+          <button type="button" class="secondary" data-close-dialog="settingsDialog">Cancel</button>
+          <button type="submit">Change PIN</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="dropdownDialog" class="modal dropdown-modal">
+      <section>
+        <div class="modal-header">
+          <div>
+            <h2>Task Dropdowns</h2>
+            <p>Create the dropdowns you want to reuse across tasks.</p>
+          </div>
+          <button class="icon-only subtle" type="button" data-close-dialog="dropdownDialog" title="Close" aria-label="Close"><i data-lucide="x"></i></button>
+        </div>
+        <div class="dropdown-manager">
+          <div id="dropdownList" class="dropdown-list"></div>
+          <form id="dropdownForm" class="dropdown-form" method="dialog">
+            <input type="hidden" id="dropdownId">
+            <label>
+              Dropdown name
+              <input id="dropdownLabel" type="text" maxlength="40" placeholder="Location" required>
+            </label>
+            <label>
+              Options
+              <textarea id="dropdownOptions" rows="7" placeholder="Home&#10;Office&#10;Outside" required></textarea>
+            </label>
+            <p class="hint">Write one option per line. Empty lines are ignored.</p>
+            <div class="modal-actions">
+              <button id="newDropdownButton" type="button" class="secondary">New</button>
+              <button type="submit">Save dropdown</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </dialog>
+  </body>
+</html>
