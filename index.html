@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Daily Routine Checklist</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div id="lockScreen" class="lock-screen">
+      <section class="pin-panel" aria-labelledby="pinTitle">
+        <div class="brand-mark" aria-hidden="true">DR</div>
+        <h1 id="pinTitle">Daily Routine</h1>
+        <p>Enter your 4 digit PIN to open your checklist.</p>
+        <form id="pinForm" class="pin-form">
+          <label for="pinInput">PIN</label>
+          <input id="pinInput" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="current-password" placeholder="0000" required>
+          <button type="submit">Unlock</button>
+          <span id="pinError" class="form-error" role="alert"></span>
+        </form>
+      </section>
+    </div>
+
+    <main id="appShell" class="app-shell is-hidden">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Daily Routine</p>
+          <h1 id="todayHeading">Checklist</h1>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-button" id="calendarButton" type="button" title="Open calendar" aria-label="Open calendar">
+            <i data-lucide="calendar-days"></i>
+            <span>Calendar</span>
+          </button>
+          <button class="icon-button" id="exportButton" type="button" title="Export Excel" aria-label="Export Excel">
+            <i data-lucide="download"></i>
+            <span>Export</span>
+          </button>
+          <button class="icon-button subtle" id="settingsButton" type="button" title="Settings" aria-label="Settings">
+            <i data-lucide="settings"></i>
+          </button>
+          <button class="icon-button subtle" id="lockButton" type="button" title="Lock app" aria-label="Lock app">
+            <i data-lucide="lock"></i>
+          </button>
+        </div>
+      </header>
+
+      <section class="date-strip" aria-label="Select date">
+        <button id="previousDay" class="icon-only" type="button" title="Previous day" aria-label="Previous day"><i data-lucide="chevron-left"></i></button>
+        <input id="activeDate" type="date" aria-label="Active date">
+        <button id="todayButton" type="button">Today</button>
+        <button id="nextDay" class="icon-only" type="button" title="Next day" aria-label="Next day"><i data-lucide="chevron-right"></i></button>
+      </section>
+
+      <section class="summary-band" aria-label="Daily summary">
+        <div class="summary-item">
+          <span id="completedCount">0</span>
+          <small>Completed</small>
+        </div>
+        <div class="summary-item">
+          <span id="totalCount">0</span>
+          <small>Total goals</small>
+        </div>
+        <div class="summary-item">
+          <span id="completionPercent">0%</span>
+          <small>Progress</small>
+        </div>
+      </section>
+
+      <section class="workspace-grid">
+        <section class="panel checklist-panel" aria-labelledby="checklistTitle">
+          <div class="panel-header">
+            <div>
+              <h2 id="checklistTitle">Today’s Tasks</h2>
+              <p>Check off goals and record useful details.</p>
+            </div>
+            <button id="addTaskButton" type="button"><i data-lucide="plus"></i><span>Add task</span></button>
+          </div>
+          <div id="taskList" class="task-list"></div>
+          <div id="emptyTasks" class="empty-state">
+            <i data-lucide="list-plus"></i>
+            <p>Add your first daily task to begin tracking your routine.</p>
+          </div>
+        </section>
+
+        <aside class="panel notes-panel" aria-labelledby="notesTitle">
+          <div class="panel-header compact">
+            <h2 id="notesTitle">Daily Notes</h2>
+          </div>
+          <textarea id="dailyNotes" rows="12" placeholder="Notes for this day..."></textarea>
+          <p class="hint">Notes are saved automatically for the selected date.</p>
+        </aside>
+      </section>
+    </main>
+
+    <dialog id="taskDialog" class="modal">
+      <form id="taskForm" method="dialog">
+        <div class="modal-header">
+          <h2 id="taskDialogTitle">Add task</h2>
+          <button class="icon-only subtle" value="cancel" type="button" data-close-dialog="taskDialog" title="Close" aria-label="Close"><i data-lucide="x"></i></button>
+        </div>
+        <input type="hidden" id="taskId">
+        <label>
+          Task name
+          <input id="taskName" type="text" maxlength="80" placeholder="Morning walk" required>
+        </label>
+        <div class="form-grid">
+          <label>
+            Default time
+            <input id="taskTime" type="time">
+          </label>
+          <label>
+            Duration
+            <select id="taskDuration">
+              <option value="5 min">5 min</option>
+              <option value="10 min">10 min</option>
+              <option value="15 min">15 min</option>
+              <option value="30 min">30 min</option>
+              <option value="45 min">45 min</option>
+              <option value="60 min">60 min</option>
+              <option value="90 min">90 min</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-grid">
+          <label>
+            Type
+            <select id="taskType">
+              <option value="Health">Health</option>
+              <option value="Work">Work</option>
+              <option value="Study">Study</option>
+              <option value="Home">Home</option>
+              <option value="Mindfulness">Mindfulness</option>
+              <option value="Custom">Custom</option>
+            </select>
+          </label>
+          <label>
+            Priority
+            <select id="taskPriority">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="secondary" data-close-dialog="taskDialog">Cancel</button>
+          <button type="submit">Save task</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="calendarDialog" class="modal calendar-modal">
+      <section>
+        <div class="modal-header">
+          <div>
+            <h2>Calendar</h2>
+            <p id="calendarRange">Progress overview</p>
+          </div>
+          <button class="icon-only subtle" type="button" data-close-dialog="calendarDialog" title="Close" aria-label="Close"><i data-lucide="x"></i></button>
+        </div>
+        <div class="calendar-toolbar">
+          <div class="segmented" role="tablist" aria-label="Calendar view">
+            <button type="button" data-calendar-view="day" class="active">Day</button>
+            <button type="button" data-calendar-view="week">Week</button>
+            <button type="button" data-calendar-view="month">Month</button>
+            <button type="button" data-calendar-view="year">Year</button>
+          </div>
+          <div class="segmented" role="tablist" aria-label="Calendar colour mode">
+            <button type="button" data-color-mode="status" class="active">All / not all</button>
+            <button type="button" data-color-mode="gradient">Goal gradient</button>
+          </div>
+        </div>
+        <div class="calendar-nav">
+          <button id="calendarPrevious" class="icon-only" type="button" title="Previous" aria-label="Previous"><i data-lucide="chevron-left"></i></button>
+          <strong id="calendarTitle">Today</strong>
+          <button id="calendarNext" class="icon-only" type="button" title="Next" aria-label="Next"><i data-lucide="chevron-right"></i></button>
+        </div>
+        <div id="calendarGrid" class="calendar-grid"></div>
+        <div class="legend">
+          <span><i class="swatch complete"></i> All goals achieved</span>
+          <span><i class="swatch partial"></i> Some goals achieved</span>
+          <span><i class="swatch missed"></i> Not achieved</span>
+        </div>
+      </section>
+    </dialog>
+
+    <dialog id="settingsDialog" class="modal">
+      <form id="pinChangeForm" method="dialog">
+        <div class="modal-header">
+          <h2>Settings</h2>
+          <button class="icon-only subtle" type="button" data-close-dialog="settingsDialog" title="Close" aria-label="Close"><i data-lucide="x"></i></button>
+        </div>
+        <label>
+          Current PIN
+          <input id="currentPin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required>
+        </label>
+        <label>
+          New 4 digit PIN
+          <input id="newPin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required>
+        </label>
+        <span id="pinChangeMessage" class="form-error" role="alert"></span>
+        <div class="modal-actions">
+          <button type="button" class="secondary" data-close-dialog="settingsDialog">Cancel</button>
+          <button type="submit">Change PIN</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>
