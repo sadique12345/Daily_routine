@@ -4,9 +4,49 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Daily Routine Checklist</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+      [hidden],
+      .is-hidden {
+        display: none !important;
+      }
+
+      .lock-screen {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .pin-panel {
+        width: min(420px, calc(100% - 32px));
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(222, 215, 204, 0.85);
+        border-radius: 8px;
+        box-shadow: 0 18px 48px rgba(36, 30, 20, 0.12);
+        padding: 34px;
+      }
+
+      .brand-mark {
+        width: 54px;
+        height: 54px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: #176b87;
+        color: #fff;
+        font-weight: 900;
+        margin-bottom: 18px;
+      }
+
+      .app-shell {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 26px 0 42px;
+      }
+    </style>
+    <link rel="stylesheet" href="styles.css?v=20260507-2">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-    <script src="app.js" defer></script>
+    <script src="app.js?v=20260507-2" defer></script>
   </head>
   <body>
     <div id="lockScreen" class="lock-screen">
@@ -23,7 +63,7 @@
       </section>
     </div>
 
-    <main id="appShell" class="app-shell is-hidden">
+    <main id="appShell" class="app-shell is-hidden" hidden>
       <header class="topbar">
         <div>
           <p class="eyebrow">Daily Routine</p>
@@ -58,43 +98,3 @@
         <div class="summary-item">
           <span id="completedCount">0</span>
           <small>Completed</small>
-        </div>
-        <div class="summary-item">
-          <span id="totalCount">0</span>
-          <small>Total goals</small>
-        </div>
-        <div class="summary-item">
-          <span id="completionPercent">0%</span>
-          <small>Progress</small>
-        </div>
-      </section>
-
-      <section class="workspace-grid">
-        <section class="panel checklist-panel" aria-labelledby="checklistTitle">
-          <div class="panel-header">
-            <div>
-              <h2 id="checklistTitle">Today’s Tasks</h2>
-              <p>Check off goals and record useful details.</p>
-            </div>
-            <button id="addTaskButton" type="button"><i data-lucide="plus"></i><span>Add task</span></button>
-          </div>
-          <div id="taskList" class="task-list"></div>
-          <div id="emptyTasks" class="empty-state">
-            <i data-lucide="list-plus"></i>
-            <p>Add your first daily task to begin tracking your routine.</p>
-          </div>
-        </section>
-
-        <aside class="panel notes-panel" aria-labelledby="notesTitle">
-          <div class="panel-header compact">
-            <h2 id="notesTitle">Daily Notes</h2>
-          </div>
-          <textarea id="dailyNotes" rows="12" placeholder="Notes for this day..."></textarea>
-          <p class="hint">Notes are saved automatically for the selected date.</p>
-        </aside>
-      </section>
-    </main>
-
-    <dialog id="taskDialog" class="modal">
-      <form id="taskForm" method="dialog">
-        <div class="modal-header">
